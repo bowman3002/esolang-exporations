@@ -1,16 +1,15 @@
 stack-push-0   
 read-num-to-heap-0	
-		stack-pop 
-
-stack-push-1   	
+		stack-push-1   	
 read-num-to-heap-1	
-		stack-pop 
-
-call-copy-heap
+		call-copy-heap
  	 
 subtract-stack	  	swap-needed-jump
-			  
-copy-heap:label-0
+		 	  
+jmp-to-main
+ 
+ 	 	
+------------------------------copy-heap:label-0
    
 stack-push-0    
 call-get-heap
@@ -20,28 +19,19 @@ call-get-heap
  		
 return
 	
-end----get-heap:label-1
+end------------------------------get-heap:label-1
   	
-read-heap-at-stack-top			swap-stack 
-	pop-stack-top 
-
-return
+read-heap-at-stack-top			return
 	
-end----overwrite-heap:label-2
+end-------------------------------overwrite-heap:label-2
    	 
-stack-push-0    
-store-on-heap		 stack-pop 
-
-stack-pop 
-
 stack-push-1   	
-store-on-heap		 stack-pop 
-
-stack-pop 
-
-return
+swap 
+	store-on-heap		 stack-push-0    
+swap 
+	store-on-heap		 return
 	
-end:overwrite-heap-----swap-heap:label-3
+end:overwrite-heap---------------------swap-heap:label-3
    		
 call-copy-heap
  	 
@@ -50,6 +40,29 @@ swap-stack
  	 	 
 return
 	
-end:swap-heap-----swap-then-main:label-4
+end:swap-heap--------------------------swap-then-main:label-4
    	  
-   
+call-swap-heap
+ 	 		
+main:label-5
+   	 	
+call-copy-heap
+ 	 
+modulo	 		dup 
+ end-if-zero
+	  		 
+call-swap-heap
+ 	 		
+push-1   	
+swap 
+	save-to-heap		 jmp-to-main
+ 
+ 	 	
+-----------------------------------------end-program:label-6
+   		 
+push-1   	
+read-heap-at-1				
+ 	
+
+
+
