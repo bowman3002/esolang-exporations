@@ -9,7 +9,7 @@
         #\t))
   (define (number->whitespacechar-rec number char-list)
     (if (= number 0)
-        char-list
+        (append char-list '(#\n))
         (number->whitespacechar-rec (quotient number 2) (cons (binary->whitespacechar (remainder number 2)) char-list))))
   (if (< number 0)
       (cons #\t (number->whitespacechar-rec (abs number) '()))
