@@ -17,9 +17,6 @@
         (literal->whitespace-rec (rest literal-list) (cons (convert-literal (first literal-list)) whitespace-list))))
   (literal->whitespace-rec literal-list '()))
 
-(define (charlist->string list)
-  (apply string list)
-  )
 
 (define (print-list list)
   (define out (open-output-file "data" #:exists 'truncate))
@@ -27,6 +24,13 @@
   (close-output-port out)
   )
 
+(define (read-conversion)
+  (define in (open-input-file "input"))
+  (let ((input (read-line in)))
+    (close-input-port in)
+    input)
+  )
+
 (define run-conversion
-  (compose print-list charlist->string literal->whitespace)
+  (compose print-list list->string literal->whitespace string->list read-conversion)
   )
