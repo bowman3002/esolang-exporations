@@ -1,6 +1,5 @@
 #lang racket
 
-(provide run-from-data)
 
 (define (convert-literal literal)
   (cond ((eq? literal #\s)
@@ -31,9 +30,6 @@
     (close-input-port in)
     input)
   )
-
-(define run-from-data
-  (compose print-list list->string literal->whitespace))
 
 (define run-conversion
   (compose print-list list->string literal->whitespace string->list read-conversion)
