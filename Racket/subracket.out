@@ -1,0 +1,9 @@
+psh 2
+psh 3
+mul
+psh 4
+psh 5
+sub
+add
+pnm
+end

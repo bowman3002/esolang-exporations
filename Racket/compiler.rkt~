@@ -1,0 +1,10 @@
+#lang racket
+
+(require racket/match)
+
+; Takes in only well-formed LISP-style code with math operators (+, -, *, /, modulus)
+; and two arguments per operator call
+(define (subracket->assembly subracket)
+  (define (subracket->assembly-rec subracket assembly-list)
+  (match subracket
+    [])))

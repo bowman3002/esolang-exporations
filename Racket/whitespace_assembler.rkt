@@ -2,6 +2,8 @@
 
 (require "whitespace_converter.rkt")
 
+(provide assembly->whitespace)
+
 (define (number->whitespacechar number)
   (define (binary->whitespacechar binary)
     (if (= binary 0)
@@ -71,13 +73,13 @@
 
 (define (read-assembly-from-file filename process)
   (define in (open-input-file filename))
-  (define (process-line port process rev-lists)
+  (define (process-line port process lists)
     (let ((line (read-line port)))
       (if (eq? line eof)
           (begin
             (close-input-port in)
-            rev-lists)
-          (process-line port process (append rev-lists (process line))))))
+            lists)
+          (process-line port process (append lists (process line))))))
   (process-line in process '()))
 
 (define (assembly->whitespace filename)

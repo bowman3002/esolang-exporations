@@ -1,0 +1,1 @@
+("8.1" ta6osx ("b0cf40ecdd76b4fd70bc7141f09310c8f70e5d81" . "73a55ef385f3749a4e1ac5ec5318680b0a391817") #"/Users/adumm/dev/Hackathon/2021/esolang-exporations/Racket/whitespace_converter.rkt" (collects #"errortrace" #"errortrace-key.rkt") (collects #"racket" #"main.rkt") (collects #"racket" #"runtime-config.rkt"))
