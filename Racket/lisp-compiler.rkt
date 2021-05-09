@@ -6,7 +6,7 @@
 ; Atomic expressions are those that cannot be split up further into recursable-pieces
 (define (aexpr? expr)
   (match expr
-    [`(lambda (,_) ,_) #t]
+    [`(lambda (,_ ...) ,_) #t]
     [ (? symbol?)     #t]
     [ (? integer?)    #t]
     [ else #f]))
@@ -105,3 +105,24 @@
                                       (T*-k (cdr exprs) (lambda (tl)
                                                           (k (cons hd tl))))))]))
 
+; CPS-ize an already-existing normal-form function
+(define (cps f)
+  (lambda args
+    (match args
+      [`(,xs ... ,k)
+       (k (apply f xs))])))
+
+; if variants implementation for debugging
+(define-syntax if-ltz
+  (syntax-rules ()
+      ((_ num if-true if-false)
+       (if (< num 0)
+           if-true
+           if-false))))
+
+(define-syntax if-eqz
+  (syntax-rules ()
+    ((_ num if-true if-false)
+     (if (= num 0)
+         if-true
+         if-false))))
