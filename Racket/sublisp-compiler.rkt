@@ -80,6 +80,13 @@
        ; =>
        (compile-args-list args)
        (compile-impl body)]
+      [`(input ,cont)
+       ; =>
+       (yield "psh 1") ; Heap-1 is the input register
+       (yield "rnm")
+       (yield "psh 1")
+       (yield "rtr")
+       (call-fn cont)] ; Input leaves the input on the top of the stack for use in function application
       [`(if-ltz ,cond ,expr-t ,expr-f)
        ; =>
        (define if-label if-label-index)
@@ -201,3 +208,5 @@
   (define asm-file (string-append in-file ".asm"))
   (compile-from-file in-file asm-file)
   (assembly->whitespace asm-file))
+
+(define (input) (string->number (read-line)))
