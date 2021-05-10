@@ -2,6 +2,8 @@
 
 (require racket/match)
 
+(provide alpha-transform)
+
 (define (alpha-transform expr)
   (match expr
     [`(lambda (,args ...) ,body)

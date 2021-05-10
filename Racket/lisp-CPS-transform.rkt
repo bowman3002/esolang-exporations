@@ -6,6 +6,9 @@
 (provide T-c)
 (provide prims)
 (provide prim?)
+(provide cps)
+(provide if-ltz)
+(provide if-eqz)
 
 ; Atomic expressions are those that cannot be split up further into recursable-pieces
 (define (aexpr? expr)

@@ -8,9 +8,10 @@
 (require "whitespace_converter.rkt")
 (require "whitespace_assembler.rkt")
 
-(define transformed-program '())
-
 (define (yield x) (shift k (cons x (k (void)))))
+
+(define (transform program)
+  (T-c (alpha-transform program) '(lambda (x) x)))
 
 (define (prim->instruction primitive)
   (match primitive
@@ -20,120 +21,8 @@
     ['/ "div"]
     ['modulus "mod"]))
 
-(define (CPS-transform expr)
-  (T-c expr '(lambda (x) print-end)))
-
-(define (transform-pipeline program)
-  (define out-program (alpha-transform (CPS-transform program)))
-  (find-function-bindings out-program)
-  (set! transformed-program out-program)
-  out-program)
-
-(define (compile expr)
-  (compile-impl expr))
-
-(define (compile-args-list args-list)
-  (match args-list
-    [`(func-call ,func-index)
-     ; =>
-     ;(yield (format "jmp ~a" func-index))
-     '()]
-    [`(,first ,rest ...)
-     ; =>
-     (define arg-heap-index (hash-ref bindings-hash-table first))
-     (match arg-heap-index
-       [`(func-call ,_)
-         ; =>
-         '()]
-       [else
-        ; =>
-        (yield (format "psh ~a" arg-heap-index))
-        (yield "swp")
-        (yield "str")])
-     (compile-args-list rest)]
-    [`() '()]))
-
-(define (compile-impl expr)
-    (match expr
-      [`(lambda (,args ... ,cont-sym) ,body)
-       ; =>
-       (compile-args-list args)
-       (compile-impl body)
-       (match (hash-ref bindings-hash-table cont-sym)
-         [`(func-call ,func-index)
-          ; =>
-          (yield (format "jmp ~a" func-index))]
-         [ _ '()])]
-      [`(func-call ,func-index)
-       (yield (format "jmp ~a" func-index))]
-      [`((cps ,sym) ,args ... ,cont-sym)
-       ; =>
-       (compile-impl args)
-       (define instruction (prim->instruction sym))
-       (for ([i (build-list (- (length args) 1) (lambda (x) 0))])
-         (yield instruction))]
-      [`(,first)
-       ; =>
-       `(,(compile-impl first))]
-      [`(,first ,rest ...)
-       ; =>
-       (compile-impl first)
-       (compile-impl rest)]
-      ['print-end
-       ; =>
-       (yield "pnm")
-       (yield (format "jmp ~a" (+ 1 function-label-index)))]
-      [ (? symbol?)
-       ; =>
-       (define heap-index (hash-ref bindings-hash-table expr))
-       (match heap-index
-         [`(func-call ,func-index)
-          ; =>
-          (yield (format "jmp ~a" func-index))]
-         [ heap-index
-           ; =>
-           (yield (format "psh ~a" heap-index))
-           (yield "rtr")])]
-      [_ expr]))
-
-(define (compile-main main-program)
-  (yield (format "lbl ~a" function-label-index))
-  (match main-program
-    [`((func-call ,index) ,args ... ,cont)
-     ; =>
-     (for ([arg args])
-       (match arg
-         [`(func-call ,func-index)
-          ; =>
-          '()]
-         [ else
-          ; =>
-          (yield (format "psh ~a" arg))
-          '()]))
-     (yield (format "jmp ~a" index))]
-    [`((func-call ,index))
-     (yield (format "jmp ~a" index))]))
-
 (define (compile-program program)
-  (define transformed-program (transform-pipeline program))
-  (define instructions (reset
-                        (begin
-                          (compile-functions functions-hash-table)
-                          (compile-main transformed-program)
-                          (yield (format "lbl ~a" (+ 1 function-label-index)))
-                          (yield "end")
-                          '())))
-  `(,(format "jmp ~a" function-label-index) . ,instructions))
-
-(define (compile-functions functions-table)
-  (map compile-function-pair (hash->list functions-table)))
-
-(define (compile-function-pair function-pair)
-  (match function-pair
-    [`(,function-index . ,function)
-     ; =>
-     (yield (format "lbl ~a" function-index))
-     (compile-impl function)]))
+  (transform program))
 
 (define (load-program in-file)
   (define in (open-input-file in-file))
