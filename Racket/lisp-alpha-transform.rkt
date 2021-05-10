@@ -7,6 +7,7 @@
 (provide alpha-transform)
 (provide find-function-bindings)
 (provide function-label-index)
+(provide bindings-function-table)
 
 (define binding-index 2)
 (define bindings-hash-table (make-hash))
@@ -80,7 +81,10 @@
     [`(lambda (,args ...) ,body)
      ; =>
      (define alpha-body (alpha-transform body))
-     (match (parse-bindings args body)
+     (match (parse-bindings args alpha-body)
+       [`(func-call ,func-index)
+        ; =>
+        17]
        [`(,new-args ,new-body)
         ; =>
         (define new-lambda `(lambda (,@new-args) ,new-body))
@@ -113,6 +117,15 @@
     [`(lambda (,args ...) ,body)
      ; =>
      `(lambda (,@args) ,(replace-symbol body old new))]
+    [`(func-call ,func-index)
+     ; =>
+     (define old-lambda (hash-ref functions-hash-table func-index))
+     (match old-lambda
+       [`(lambda (,args ...) ,body)
+        ; =>
+        (define new-lambda `(lambda (,@args) ,(replace-symbol body old new)))
+        (hash-set! functions-hash-table func-index new-lambda)
+        `(func-call ,func-index)])]
     [`(,first ,rest ...)
      ; =>
      `(,(replace-symbol first old new) . ,(replace-symbol rest old new))]

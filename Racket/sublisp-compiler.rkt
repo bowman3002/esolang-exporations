@@ -8,6 +8,8 @@
 (require "whitespace_converter.rkt")
 (require "whitespace_assembler.rkt")
 
+(define transformed-program '())
+
 (define (yield x) (shift k (cons x (k (void)))))
 
 (define (prim->instruction primitive)
@@ -24,6 +26,7 @@
 (define (transform-pipeline program)
   (define out-program (alpha-transform (CPS-transform program)))
   (find-function-bindings out-program)
+  (set! transformed-program out-program)
   out-program)
 
 (define (compile expr)
@@ -31,12 +34,22 @@
 
 (define (compile-args-list args-list)
   (match args-list
+    [`(func-call ,func-index)
+     ; =>
+     ;(yield (format "jmp ~a" func-index))
+     '()]
     [`(,first ,rest ...)
      ; =>
      (define arg-heap-index (hash-ref bindings-hash-table first))
-     (yield (format "psh ~a" arg-heap-index))
-     (yield "swp")
-     (yield "str")
+     (match arg-heap-index
+       [`(func-call ,_)
+         ; =>
+         '()]
+       [else
+        ; =>
+        (yield (format "psh ~a" arg-heap-index))
+        (yield "swp")
+        (yield "str")])
      (compile-args-list rest)]
     [`() '()]))
 
@@ -51,6 +64,8 @@
           ; =>
           (yield (format "jmp ~a" func-index))]
          [ _ '()])]
+      [`(func-call ,func-index)
+       (yield (format "jmp ~a" func-index))]
       [`((cps ,sym) ,args ... ,cont-sym)
        ; =>
        (compile-impl args)
@@ -87,7 +102,14 @@
     [`((func-call ,index) ,args ... ,cont)
      ; =>
      (for ([arg args])
-       (yield (format "psh ~a" arg)))
+       (match arg
+         [`(func-call ,func-index)
+          ; =>
+          '()]
+         [ else
+          ; =>
+          (yield (format "psh ~a" arg))
+          '()]))
      (yield (format "jmp ~a" index))]
     [`((func-call ,index))
      (yield (format "jmp ~a" index))]))
