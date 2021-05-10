@@ -27,6 +27,7 @@
   (define out-program (alpha-transform (CPS-transform program)))
   ;(find-function-bindings out-program)
   (set! transformed-program out-program)
+  (set! if-label-index (+ 10 function-label-index))
   out-program)
 
 (define (compile expr)
@@ -62,12 +63,43 @@
      (yield "str")
      (yield "jmp 0")])) ; END
 
+(define if-label-index null)
+
+(define (eval-expr expr)
+  (match expr
+    [`(func-call ,func-index)
+     func-index]
+    [(? integer?)
+     expr]
+    [(? symbol?)
+     (hash-ref bindings-hash-table expr)]))
+
 (define (compile-impl expr)
     (match expr
       [`(lambda (,args ...) ,body)
        ; =>
        (compile-args-list args)
        (compile-impl body)]
+      [`(if-ltz ,cond ,expr-t ,expr-f)
+       ; =>
+       (define if-label if-label-index)
+       (set! if-label-index (+ 1 if-label-index))
+       (yield (format "psh ~a" (eval-expr cond)))
+       (yield "rtr")
+       (yield (format "jng ~a" if-label))
+       (compile-impl expr-f)
+       (yield (format "lbl ~a" if-label))
+       (compile-impl expr-t)]
+      [`(if-eqz ,cond ,expr-t ,expr-f)
+       ; =>
+       (define if-label if-label-index)
+       (set! if-label-index (+ 1 if-label-index))
+       (yield (format "psh ~a" (eval-expr cond)))
+       (yield "rtr")
+       (yield (format "jez ~a" if-label))
+       (compile-impl expr-f)
+       (yield (format "lbl ~a" if-label))
+       (compile-impl expr-t)]
       [`(func-call ,func-index)
        (yield (format "psh ~a" func-index))]
       [`((cps ,sym) ,args ... ,cont-sym)

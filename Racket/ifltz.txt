@@ -1,0 +1,1 @@
+((lambda (x) (if-eqz x 15 500)) 0)
