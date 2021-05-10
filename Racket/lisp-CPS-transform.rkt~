@@ -3,8 +3,6 @@
 
 (require racket/match)
 
-(provide T-c)
-
 ; Atomic expressions are those that cannot be split up further into recursable-pieces
 (define (aexpr? expr)
   (match expr

@@ -1,0 +1,12 @@
+#lang racket
+
+(require racket/match)
+
+(define bindings-hash-table (make-hash))
+(define functions-hash-table (make-hash))
+
+(define (alpha-transform expr)
+  (match expr
+    [`(lambda (,args ...) ,body)
+     ; =>
+     args]))
