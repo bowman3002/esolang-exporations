@@ -21,11 +21,11 @@
     ['modulus "mod"]))
 
 (define (CPS-transform expr)
-  (T-c expr '(lambda (x) print-end)))
+  (T-c expr '(lambda (x) (print-end x))))
 
 (define (transform-pipeline program)
   (define out-program (alpha-transform (CPS-transform program)))
-  (find-function-bindings out-program)
+  ;(find-function-bindings out-program)
   (set! transformed-program out-program)
   out-program)
 
@@ -34,96 +34,109 @@
 
 (define (compile-args-list args-list)
   (match args-list
-    [`(func-call ,func-index)
-     ; =>
-     ;(yield (format "jmp ~a" func-index))
-     '()]
     [`(,first ,rest ...)
      ; =>
      (define arg-heap-index (hash-ref bindings-hash-table first))
-     (match arg-heap-index
-       [`(func-call ,_)
-         ; =>
-         '()]
-       [else
-        ; =>
-        (yield (format "psh ~a" arg-heap-index))
-        (yield "swp")
-        (yield "str")])
+     (yield (format "psh ~a" arg-heap-index))
+     (yield "swp")
+     (yield "str")
      (compile-args-list rest)]
     [`() '()]))
 
+(define (call-fn cont-sym)
+  (match cont-sym
+    [`(func-call ,func-index)
+     ; =>
+     (yield (format "psh ~a" func-index))
+     (yield "psh 0")
+     (yield "swp")
+     (yield "str")
+     (yield "jmp 0")]
+    [_
+     ; =>
+     (define fn-index (hash-ref bindings-hash-table cont-sym))
+     (yield (format "psh ~a" fn-index)) ; BEGIN - set FN-ind reg (heap:0) to cont-fn
+     (yield "rtr")
+     (yield "psh 0")
+     (yield "swp")
+     (yield "str")
+     (yield "jmp 0")])) ; END
+
 (define (compile-impl expr)
     (match expr
-      [`(lambda (,args ... ,cont-sym) ,body)
+      [`(lambda (,args ...) ,body)
        ; =>
        (compile-args-list args)
-       (compile-impl body)
-       (match (hash-ref bindings-hash-table cont-sym)
-         [`(func-call ,func-index)
-          ; =>
-          (yield (format "jmp ~a" func-index))]
-         [ _ '()])]
+       (compile-impl body)]
       [`(func-call ,func-index)
-       (yield (format "jmp ~a" func-index))]
+       (yield (format "psh ~a" func-index))]
       [`((cps ,sym) ,args ... ,cont-sym)
        ; =>
-       (compile-impl args)
+       (for ([arg (reverse args)])
+         (compile-impl arg))
        (define instruction (prim->instruction sym))
        (for ([i (build-list (- (length args) 1) (lambda (x) 0))])
-         (yield instruction))]
-      [`(,first)
+         (yield instruction))
+       (call-fn cont-sym)]
+      [`(print-end ,expr)
        ; =>
-       `(,(compile-impl first))]
-      [`(,first ,rest ...)
-       ; =>
-       (compile-impl first)
-       (compile-impl rest)]
-      ['print-end
-       ; =>
+       (yield (format "psh ~a" (hash-ref bindings-hash-table expr)))
+       (yield "rtr")
        (yield "pnm")
        (yield (format "jmp ~a" (+ 1 function-label-index)))]
+      [`(,first ,rest ...)
+       ; =>
+       (for ([i (reverse rest)])
+         (compile-impl i))
+       (call-fn first)]
       [ (? symbol?)
        ; =>
        (define heap-index (hash-ref bindings-hash-table expr))
        (match heap-index
          [`(func-call ,func-index)
           ; =>
-          (yield (format "jmp ~a" func-index))]
+          (yield (format "psh ~a" func-index))]
          [ heap-index
            ; =>
            (yield (format "psh ~a" heap-index))
            (yield "rtr")])]
-      [_ expr]))
+      [_
+       ; =>
+       (yield (format "psh ~a" expr))]))
 
 (define (compile-main main-program)
-  (yield (format "lbl ~a" function-label-index))
-  (match main-program
-    [`((func-call ,index) ,args ... ,cont)
-     ; =>
-     (for ([arg args])
-       (match arg
-         [`(func-call ,func-index)
-          ; =>
-          '()]
-         [ else
-          ; =>
-          (yield (format "psh ~a" arg))
-          '()]))
-     (yield (format "jmp ~a" index))]
-    [`((func-call ,index))
-     (yield (format "jmp ~a" index))]))
+  (compile-impl main-program))
 
 (define (compile-program program)
   (define transformed-program (transform-pipeline program))
   (define instructions (reset
                         (begin
-                          (compile-functions functions-hash-table)
                           (compile-main transformed-program)
+                          (compile-function-lookup functions-hash-table)
+                          (compile-functions functions-hash-table)
                           (yield (format "lbl ~a" (+ 1 function-label-index)))
                           (yield "end")
                           '())))
-  `(,(format "jmp ~a" function-label-index) . ,instructions))
+  instructions)
+
+(define (compile-function-lookup functions-table)
+  (yield "lbl 0")
+  (yield "psh 0")
+  (yield "rtr")
+  (yield "psh 1")
+  (yield "sub")
+  (map compile-lookup (hash->list functions-table))
+  (yield (format "jmp ~a" (+ 1 function-label-index))))
+
+
+(define (compile-lookup function-pair)
+  (match function-pair
+    [`(,function-index . ,_)
+     ; =>
+     (yield "dup")
+     (yield (format "jez ~a" function-index))
+     (yield "psh 1")
+     (yield "sub")]))
 
 (define (compile-functions functions-table)
   (map compile-function-pair (hash->list functions-table)))
@@ -133,6 +146,7 @@
     [`(,function-index . ,function)
      ; =>
      (yield (format "lbl ~a" function-index))
+     (yield "dis")
      (compile-impl function)]))
 
 (define (load-program in-file)

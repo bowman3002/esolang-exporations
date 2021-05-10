@@ -11,7 +11,7 @@
 
 (define binding-index 2)
 (define bindings-hash-table (make-hash))
-(define function-label-index 0)
+(define function-label-index 1)
 (define functions-hash-table (make-hash))
 (define bindings-function-table (make-hash))
 
