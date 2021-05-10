@@ -4,6 +4,8 @@
 (require racket/match)
 
 (provide T-c)
+(provide prims)
+(provide prim?)
 
 ; Atomic expressions are those that cannot be split up further into recursable-pieces
 (define (aexpr? expr)
