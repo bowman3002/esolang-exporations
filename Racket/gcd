@@ -5,7 +5,7 @@
                 ((lambda (remainder)
                     (if-eqz remainder
                             small
-                            ((f f) small remainder))) (modulus big small)))))
+                            ((f f) small remainder))) (modulo big small)))))
     (lambda ()
         ((lambda (first)
             ((lambda (second)

@@ -18,14 +18,13 @@
     ['- "sub"]
     ['* "mul"]
     ['/ "div"]
-    ['modulus "mod"]))
+    ['modulo "mod"]))
 
 (define (CPS-transform expr)
   (T-c expr '(lambda (x) (print-end x))))
 
 (define (transform-pipeline program)
   (define out-program (alpha-transform (CPS-transform program)))
-  ;(find-function-bindings out-program)
   (set! transformed-program out-program)
   (set! if-label-index (+ 10 function-label-index))
   out-program)
@@ -111,7 +110,7 @@
        (yield (format "psh ~a" func-index))]
       [`((cps ,sym) ,args ... ,cont-sym)
        ; =>
-       (for ([arg (reverse args)])
+       (for ([arg args])
          (compile-impl arg))
        (define instruction (prim->instruction sym))
        (for ([i (build-list (- (length args) 1) (lambda (x) 0))])

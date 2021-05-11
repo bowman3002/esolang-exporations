@@ -8,6 +8,7 @@
 (provide prim?)
 (provide if-ltz)
 (provide if-eqz)
+(provide cps)
 
 ; Atomic expressions are those that cannot be split up further into recursable-pieces
 (define (aexpr? expr)
@@ -18,7 +19,7 @@
     [ else #f]))
 
 ; Primitive functions that allow any number of arguments
-(define prims (apply set '(+ - / * modulus)))
+(define prims (apply set '(+ - / * modulo)))
 
 (define (prim? term)
   (set-member? prims term))

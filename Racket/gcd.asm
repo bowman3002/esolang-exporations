@@ -192,9 +192,9 @@ str
 psh 11
 swp
 str
-psh 10
-rtr
 psh 9
+rtr
+psh 10
 rtr
 mod
 psh 5
@@ -318,9 +318,9 @@ dis
 psh 23
 swp
 str
-psh 24
-rtr
 psh 27
+rtr
+psh 24
 rtr
 sub
 psh 12
