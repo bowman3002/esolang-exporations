@@ -1,0 +1,47 @@
+psh 0
+rnm
+psh 1
+rnm
+cal 0
+sub
+jng 4
+jmp 5
+lbl 0
+psh 0
+cal 1
+psh 1
+cal 1
+ret
+lbl 1
+rtr
+ret
+lbl 2
+psh 1
+swp
+str
+psh 0
+swp
+str
+ret
+lbl 3
+cal 0
+swp
+cal 2
+ret
+lbl 4
+cal 3
+lbl 5
+cal 0
+mod
+dup
+jez 6
+cal 3
+psh 1
+swp
+str
+jmp 5
+lbl 6
+psh 1
+rtr
+pnm
+end

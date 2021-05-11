@@ -20,7 +20,7 @@
 
 
 (define (print-list list)
-  (define out (open-output-file "data" #:exists 'truncate))
+  (define out (open-output-file "tests/out.ws" #:exists 'truncate))
   (display list out)
   (close-output-port out)
   )

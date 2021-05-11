@@ -203,7 +203,7 @@
   (define assembly (string-join (compile-program program) (string #\newline)))
   (save-assembly assembly out-file))
 
-(define (compile-and-assemble in-file out-file)
+(define (compile-and-assemble in-file)
   (define asm-file (string-append in-file ".asm"))
   (compile-from-file in-file asm-file)
   (assembly->whitespace asm-file))
